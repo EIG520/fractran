@@ -1,0 +1,2 @@
+[env]
+LIBCLANG_PATH = { value = "/usr/lib/x86_64-linux-gnu/libclang-14.so" }

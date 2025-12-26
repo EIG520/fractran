@@ -1,0 +1,16 @@
+[package]
+name = "fractran"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "sim"
+path = "src/sim.rs"
+
+[[bin]]
+name = "enum"
+path = "src/enum.rs"
+
+[dependencies]
+number-theory = "0.0.25"
+z3 = "0.19.6"
