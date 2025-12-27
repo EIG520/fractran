@@ -8,7 +8,7 @@ fn main() {
         let time = Instant::now();
 
         let mut enumerator = Enumerator::new(sz);
-        enumerator.enumerate(1, 0);
+        enumerator.enumerate(1, 0, 0);
 
         println!("BBF({sz}) >= {} ({:?}) | {:?}", enumerator.best_steps, enumerator.counts, time.elapsed());
 

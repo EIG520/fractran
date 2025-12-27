@@ -11,15 +11,15 @@ pub struct Enumerator {
 }
 
 impl Enumerator {
-    pub fn enumerate(&mut self, sz: usize, depth: usize) {
+    pub fn enumerate(&mut self, sz: usize, nc: usize,depth: usize) {
             // println!("{depth}:{}", self.program.to_string());
         // let marked = self.program.rules.elements().len() >= 8 && self.program.rules.width == 4 && self.program.rules.elements()[0..8] == [-1,3,0,0,0,-1,2,0];
 
         // if marked {
         //     println!("MARK ({sz}): {}", self.program.to_string());
         // }
-
-        if self.program.check_ordered() == Decision::Extraneous { return; }
+        if nc > 0 && sz + nc + 1 > self.szmax{ return; }
+        
         if sz > self.szmax { return; }
 
         if sz == self.szmax {
@@ -54,25 +54,25 @@ impl Enumerator {
 
         if lelv <= 0 {
             self.program.rules.set(lelv - 1, lelx, lely);
-            self.enumerate(sz + 1, depth + 1);
+            self.enumerate(sz + 1, nc, depth + 1);
             self.program.rules.set(lelv, lelx, lely);
         }
         if lelv >= 0 {
             self.program.rules.set(lelv + 1, lelx, lely);
-            self.enumerate(sz + 1, depth + 1);
+            self.enumerate(sz + 1, nc, depth + 1);
             self.program.rules.set(lelv, lelx, lely);
         }
 
 
         if lelx < self.program.rules.width - 1 {
             self.program.rules.push_last();
-            self.enumerate(sz, depth + 1);
+            self.enumerate(sz, 0, depth + 1);
             self.program.rules.pop_last();
         } else if lelv != 0 || lelx == 0 {
 
             self.program.rules.incwidth();
 
-            self.enumerate(sz, depth + 1);
+            self.enumerate(sz,nc+1, depth + 1);
 
             self.program.rules.decwidth();
         } else {
@@ -85,7 +85,7 @@ impl Enumerator {
             match self.big_check(sz) {
                 Decision::Halt(_) | Decision::Unsure => {
                     self.program.rules.new_row();
-                    self.enumerate(sz+1, depth + 1);
+                    self.enumerate(sz+1, 0, depth+1);
                     self.program.rules.rem_row();
                 },
                 Decision::Forever | Decision::Extraneous | Decision::EHalt(_) => { }
