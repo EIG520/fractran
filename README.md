@@ -1,5 +1,5 @@
 # Rust Fractran
-This is a program for enumerating and solving Fractran programs.  This is mostly ported from https://github.com/int-y1/BBFractran/tree/main, though I did include certain optimizations.
+This is a program for enumerating and solving Fractran programs.  This is mostly ported from https://github.com/int-y1/BBFractran/tree/main, though I did make certain changes.
 
 More info at https://wiki.bbchallenge.org/wiki/Fractran/
 
