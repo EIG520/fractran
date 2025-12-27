@@ -1,9 +1,9 @@
 // use crate::program::{arr2d::Vec2d};
 
-use crate::{deciders::Decision, program::{arr2d::{SVec2d, Vec2d}, enumerate, program::FractranProgram}};
+use crate::{deciders::Decision, program::{arr2d::SVec2d, program::FractranProgram}};
 
 pub struct Enumerator {
-    szmax: usize,
+    pub szmax: usize,
     pub program: FractranProgram,
     pub count: u64,
     pub best_steps: u64,
@@ -19,49 +19,50 @@ impl Enumerator {
         //     println!("MARK ({sz}): {}", self.program.to_string());
         // }
 
+        if self.program.check_ordered() == Decision::Extraneous { return; }
+        if sz > self.szmax { return; }
+
         if sz == self.szmax {
             self.count += 1;
 
 
-            match self.big_check(self.szmax) {
+            match self.big_check(sz) {
                 Decision::Halt(st) | Decision::EHalt(st) => {
                     if st as u64 > self.best_steps {
                         self.best_steps = st as u64;
-                        println!("NEW {sz} CHAMP ({st}): {}", self.program.to_string());
+                        // println!("NEW {sz} CHAMP ({st}): {}", self.program.to_string());
                     }
                 },
                 Decision::Unsure => {
                     println!("HOLDOUT: {}", self.program.to_string());
                 }
-                j => {}
+                _ => {}
             }
 
             return;
         }
 
-        if sz > self.szmax { return; }
         let mut lelx = self.program.rules.lwidth;
 
         if lelx == 0 {
             lelx = self.program.rules.width;
         }
 
-        // if self.program.check_ordered() == Decision::Extraneous { return; }
-
         lelx -= 1;
         let lely = self.program.rules.height - 1;
         let lelv = *self.program.rules.get(lelx, lely);
 
-        if lelv >= 0 {
-            self.program.rules.set(lelv + 1, lelx, lely);
-            self.enumerate(sz + 1, depth + 1);
-            self.program.rules.set(lelv, lelx, lely);
-        }
         if lelv <= 0 {
             self.program.rules.set(lelv - 1, lelx, lely);
             self.enumerate(sz + 1, depth + 1);
             self.program.rules.set(lelv, lelx, lely);
         }
+        if lelv >= 0 {
+            self.program.rules.set(lelv + 1, lelx, lely);
+            self.enumerate(sz + 1, depth + 1);
+            self.program.rules.set(lelv, lelx, lely);
+        }
+
 
         if lelx < self.program.rules.width - 1 {
             self.program.rules.push_last();
@@ -81,13 +82,13 @@ impl Enumerator {
             //     println!("{}: {:?}", self.program.to_string(), self.big_check(self.szmax));
             // }
 
-            match self.big_check(self.szmax) {
+            match self.big_check(sz) {
                 Decision::Halt(_) | Decision::Unsure => {
                     self.program.rules.new_row();
                     self.enumerate(sz+1, depth + 1);
                     self.program.rules.rem_row();
                 },
-                Decision::Forever | Decision::Extraneous(_) | Decision::EHalt(_) => { }
+                Decision::Forever | Decision::Extraneous | Decision::EHalt(_) => { }
             }
         }
     }

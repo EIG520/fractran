@@ -1,4 +1,4 @@
-use crate::program::{enumerate::Enumerator, program::FractranProgram};
+use crate::program::enumerate::Enumerator;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Decision {
@@ -6,18 +6,18 @@ pub enum Decision {
     Unsure,
     Halt(u32),
     EHalt(u32),
-    Extraneous(u32)
+    Extraneous
 }
 
 impl Enumerator {
-    pub fn big_check(&mut self, szmax: usize) -> Decision {
+    pub fn big_check(&mut self, sz: usize) -> Decision {
         self.counts[0] += 1;
         let chk_div1 = self.program.check_div1();
         if chk_div1 != Decision::Unsure {
             return chk_div1;
         }
         self.counts[1] += 1;
-        let chk_completable = self.program.check_completable(szmax);
+        let chk_completable = self.program.check_completable(self.szmax, sz);
         if chk_completable != Decision::Unsure {
             return chk_completable;
         }

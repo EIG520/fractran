@@ -1,5 +1,3 @@
-use crate::{deciders::Decision, program::program::FractranProgram};
-
 #[derive(Clone, PartialEq, Eq)]
 pub struct Vec2d<T> {
     pub elements: Vec<T>,

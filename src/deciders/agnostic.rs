@@ -10,7 +10,7 @@ impl FractranProgram {
         let mut has_neg = false;
 
         for &n in rule {
-            has_neg |= n < 0;
+            if n<0 { has_neg = true; break }
         }
 
         if !has_neg {
@@ -32,7 +32,7 @@ impl FractranProgram {
                 if rl >= 0 && rc < 0 { cov = false; break; }
                 if rl < 0 && rc < rl { cov = false; break; }
             }
-            if cov { return Decision::Extraneous(0) }
+            if cov { return Decision::Extraneous }
         }
         Decision::Unsure
     }
@@ -44,13 +44,13 @@ impl FractranProgram {
             let mut c = true;
 
             for y in 0..self.rules.height-1 {
-                if enum_val(*self.rules.get(x, y)) > enum_val(*self.rules.get(x-1, y)) { return Decision::Extraneous(1); }
+                if enum_val(*self.rules.get(x, y)) > enum_val(*self.rules.get(x-1, y)) { return Decision::Extraneous; }
                 if enum_val(*self.rules.get(x, y)) < enum_val(*self.rules.get(x-1, y)) { c=false; break; }
             }
 
             let y = self.rules.height - 1;
             if self.rules.lwidth > x && c {
-                if enum_val(*self.rules.get(x, y)) > enum_val(*self.rules.get(x-1, y)) { return Decision::Extraneous(1); }
+                if enum_val(*self.rules.get(x, y)) > enum_val(*self.rules.get(x-1, y)) { return Decision::Extraneous; }
             }
         }
 
@@ -64,17 +64,17 @@ fn enum_val(n: i8) -> i8 {
 }
 
 impl FractranProgram {
-    pub fn check_completable(&self, szmax: usize) -> Decision {
+    pub fn check_completable(&self, szmax: usize, sz: usize) -> Decision {
         let mut need_pos = 0;
         let mut need_neg = 0;
         for i in 1..self.rules.width {
             let mut has_pos = false;
             let mut has_neg = false;
             for j in 0..self.rules.height {
-                let rule = self.rules.get_row(j);
+                let val = *self.rules.get(i,j);
 
-                has_pos |= rule[i] > 0;
-                has_neg |= rule[i] < 0;
+                has_pos |= val > 0;
+                has_neg |= val < 0;
             }
 
             if has_pos && !has_neg { need_neg += 1; }
@@ -83,13 +83,11 @@ impl FractranProgram {
 
         let mut has2 = false;
         for i in 0..self.rules.height {
-            let rule = self.rules.get_row(i);
-
-            if rule[0] != -1 {continue;}
+            if *self.rules.get(0,i) != -1 {continue;}
 
             let mut good = true;
             for j in 1..self.rules.width {
-                if j<0 {good = false; break; }
+                if *self.rules.get(j,i)<0 {good = false; break; }
             }
             if good { has2 = true; break; }
         }
@@ -105,7 +103,7 @@ impl FractranProgram {
             total += 2;
         }
 
-        if total + self.sz() > szmax { return Decision::Extraneous(2) }
+        if total + sz > szmax { return Decision::Extraneous }
         return Decision::Unsure;
     }
 }
