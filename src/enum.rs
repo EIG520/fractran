@@ -4,7 +4,7 @@ use fractran::program::enumerate::Enumerator;
 
 fn main() {
 
-    for sz in 1..18 {
+    for sz in 1..25 {
         let time = Instant::now();
 
         let mut enumerator = Enumerator::new(sz);
