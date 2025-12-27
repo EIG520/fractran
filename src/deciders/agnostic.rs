@@ -7,7 +7,6 @@ use crate::{deciders::Decision, program::{arr2d::Vec2d, program::FractranProgram
 impl FractranProgram {
     pub fn check_div1(&self) -> Decision {
         let rule = self.rules.last_row();
-
         let mut has_neg = false;
 
         for &n in rule {
@@ -25,15 +24,15 @@ impl FractranProgram {
 impl FractranProgram {
     pub fn check_covered(&self) -> Decision {
         let rlast = self.rules.last_row();
-        for i in 0..self.rules.height()-1 {
+        for i in 0..self.rules.height-1 {
             let mut cov = true;
             let rule = self.rules.get_row(i);
 
             for (&rc,&rl) in rule.iter().zip(rlast) {
-                if rc >= 0 && rl < 0 { cov = false; break; }
+                if rl >= 0 && rc < 0 { cov = false; break; }
                 if rl < 0 && rc < rl { cov = false; break; }
             }
-            if cov { return Decision::Extraneous }
+            if cov { return Decision::Extraneous(0) }
         }
         Decision::Unsure
     }
@@ -42,15 +41,16 @@ impl FractranProgram {
 impl FractranProgram {
     pub fn check_ordered(&self) -> Decision {
         for x in 2..self.rules.width {
-            for y in 0..self.rules.height()-1 {
-                if enum_val(*self.rules.get(x, y)) > enum_val(*self.rules.get(x-1, y)) { return Decision::Extraneous; }
-                if enum_val(*self.rules.get(x, y)) < enum_val(*self.rules.get(x-1, y)) { break; }
+            let mut c = true;
+
+            for y in 0..self.rules.height-1 {
+                if enum_val(*self.rules.get(x, y)) > enum_val(*self.rules.get(x-1, y)) { return Decision::Extraneous(1); }
+                if enum_val(*self.rules.get(x, y)) < enum_val(*self.rules.get(x-1, y)) { c=false; break; }
             }
 
-            let y = self.rules.height() - 1;
-            if self.rules.elements.len() % self.rules.width > x {
-                if enum_val(*self.rules.get(x, y)) > enum_val(*self.rules.get(x-1, y)) { return Decision::Extraneous; }
-                if enum_val(*self.rules.get(x, y)) < enum_val(*self.rules.get(x-1, y)) { break; }
+            let y = self.rules.height - 1;
+            if self.rules.lwidth > x && c {
+                if enum_val(*self.rules.get(x, y)) > enum_val(*self.rules.get(x-1, y)) { return Decision::Extraneous(1); }
             }
         }
 
@@ -70,7 +70,7 @@ impl FractranProgram {
         for i in 1..self.rules.width {
             let mut has_pos = false;
             let mut has_neg = false;
-            for j in 0..self.rules.height() {
+            for j in 0..self.rules.height {
                 let rule = self.rules.get_row(j);
 
                 has_pos |= rule[i] > 0;
@@ -82,7 +82,7 @@ impl FractranProgram {
         }
 
         let mut has2 = false;
-        for i in 0..self.rules.height() {
+        for i in 0..self.rules.height {
             let rule = self.rules.get_row(i);
 
             if rule[0] != -1 {continue;}
@@ -105,7 +105,7 @@ impl FractranProgram {
             total += 2;
         }
 
-        if total + self.sz() > szmax { return Decision::Extraneous }
+        if total + self.sz() > szmax { return Decision::Extraneous(2) }
         return Decision::Unsure;
     }
 }
@@ -115,23 +115,35 @@ impl FractranProgram {
         self.state = vec![1];
         self.state.extend(vec![0; self.rules.width - 1]);
 
-        let mut mouse = self.clone();
-        let mut cat = self.clone();
+        let mut dog = self.state.clone();
+        let mut mouse = self.state.clone();
+        let mut cat = self.state.clone();
         let mut key_cols = vec![0;self.rules.width];
 
         for i in 0..limit {
-            if !mouse.step_info(&mut key_cols, false) {return Decision::Halt(i);}
+            self.state = mouse;
+            if !self.step_info(&mut key_cols, false) {
+                for &el in &self.state {
+                    if el != 0 { return Decision::Halt(i); }
+                }
+                return Decision::EHalt(i)
+            }
+            mouse = self.state.clone();
 
             if i % 3 < 2 {
-                cat.step_info(&mut key_cols, true);
+                self.state = cat;
+                self.step_info(&mut key_cols, true);
+                cat = self.state.clone();
             } else {
+                self.state = dog;
                 self.step();
+                dog = self.state.clone();
 
                 let mut valid = true;
 
-                for j in 0..mouse.rules.width {
-                    if let Some(a) = mouse.state[j].checked_sub(cat.state[j]) {
-                        if let Some(b) = cat.state[j].checked_sub(self.state[j]) {
+                for j in 0..self.rules.width {
+                    if let Some(a) = mouse[j].checked_sub(cat[j]) {
+                        if let Some(b) = cat[j].checked_sub(dog[j]) {
                             if a != b {
                                 valid = false;
                                 break;
@@ -166,7 +178,7 @@ impl FractranProgram {
         let mut lones = HashSet::new();
         let solver = Solver::new();
 
-        for ri in 0..self.rules.height() {
+        for ri in 0..self.rules.height {
             let row = self.rules.get_row(ri);
             let mut exp = z3::ast::Int::from_i64(0);
 

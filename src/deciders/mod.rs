@@ -1,42 +1,44 @@
-use crate::program::program::FractranProgram;
+use crate::program::{enumerate::Enumerator, program::FractranProgram};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Decision {
     Forever,
     Unsure,
     Halt(u32),
-    Extraneous
+    EHalt(u32),
+    Extraneous(u32)
 }
 
-impl FractranProgram {
-    pub fn big_check(&mut self, szmax: usize) -> Decision {   
-        let chk_div1 = self.check_div1();
+impl Enumerator {
+    pub fn big_check(&mut self, szmax: usize) -> Decision {
+        self.counts[0] += 1;
+        let chk_div1 = self.program.check_div1();
         if chk_div1 != Decision::Unsure {
             return chk_div1;
         }
-
-        let chk_completable = self.check_completable(szmax);
+        self.counts[1] += 1;
+        let chk_completable = self.program.check_completable(szmax);
         if chk_completable != Decision::Unsure {
             return chk_completable;
         }
-
-        let chk_ordered = self.check_ordered();
+        self.counts[2] += 1;
+        let chk_ordered = self.program.check_ordered();
         if chk_ordered != Decision::Unsure {
             return chk_ordered;
         }
-
-        let chk_covered = self.check_covered();
+        self.counts[3] += 1;
+        let chk_covered = self.program.check_covered();
         if chk_covered != Decision::Unsure {
             return chk_covered;
         }
-
-        let chk_sim = self.clone().check_translate_cycle(10000);
+        self.counts[4] += 1;
+        let chk_sim = self.program.check_translate_cycle(10000);
         if chk_sim != Decision::Unsure {
             return chk_sim;
         }
-
+        self.counts[5] += 1;
         for i in 1..5 {
-            let chk_graph = self.clone().check_graph(i);
+            let chk_graph = self.program.check_graph(i);
             if chk_graph != Decision::Unsure {
                 return chk_graph;
             }

@@ -1,15 +1,15 @@
-use crate::program::arr2d::Vec2d;
+use crate::program::arr2d::SVec2d;
 const PRIMES: [i32; 19] = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67];
 
 #[derive(Clone)]
 pub struct FractranProgram {
     pub state: Vec<u64>,
-    pub rules: Vec2d<i8>,
+    pub rules: SVec2d,
 }
 
 impl FractranProgram {
     pub fn find_rule(&self) -> Option<usize> {
-        for i in 0..self.rules.height() {
+        for i in 0..self.rules.height {
             let rule = self.rules.get_row(i);
             let mut valid = true;
 
@@ -30,7 +30,7 @@ impl FractranProgram {
     }
 
     pub fn find_rule_info(&self, info: &mut Vec<usize>, cat: bool) -> Option<usize> {
-        for i in 0..self.rules.height() {
+        for i in 0..self.rules.height {
             let rule = self.rules.get_row(i);
             let mut valid = true;
 
@@ -96,12 +96,12 @@ impl FractranProgram {
         Some(steps)
     }
 
-    pub fn new(state: Vec<u64>, rules: Vec2d<i8>) -> FractranProgram {
+    pub fn new(state: Vec<u64>, rules: SVec2d) -> FractranProgram {
         FractranProgram { state, rules }
     }
 
     pub fn sz(&self) -> usize {
-        self.rules.elements.iter().map(|&a| a.abs() as usize).sum::<usize>() + self.rules.height()
+        self.rules.elements().iter().map(|&a| a.abs() as usize).sum::<usize>() + self.rules.height
     }
 }
 
@@ -138,12 +138,12 @@ impl From<String> for FractranProgram {
 
         let mut svec = vec![1];
         svec.extend(vec![0;19]);
-        return FractranProgram::new(svec, Vec2d::new(rules,20))
+        return FractranProgram::new(svec, SVec2d::new(rules,20))
     }
 }
 
 impl ToString for FractranProgram {
     fn to_string(&self) -> String {
-        format!("{:?}|{:?}", self.rules.width, self.rules.elements)
+        format!("{:?}|{:?}", self.rules.width, self.rules.elements())
     }
 }
