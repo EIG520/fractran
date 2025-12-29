@@ -1,4 +1,4 @@
-use crate::program::enumerate::Enumerator;
+use crate::program::{enumerate::Enumerator, program::FractranProgram};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Decision {
@@ -52,6 +52,40 @@ impl Enumerator {
 
 
         Decision::Unsure
+    }
+}
+
+impl FractranProgram {
+    pub fn get_decision_text(&mut self) -> String {
+        let chk_div1 = self.check_div1();
+        if chk_div1 == Decision::Forever {
+            return format!("{} INFINITE (DIV1)", self.to_string());
+        }
+
+        let chk_sim = self.check_translate_cycle(100000);
+        match chk_sim {
+            Decision::EHalt(st) | Decision::Halt(st) => {
+                return format!("{} HALT ({})", self.to_string(), st);
+            },
+            Decision::Forever => {
+                return format!("{} INFINITE (TRANSLATED CYCLE)", self.to_string());
+            },
+            Decision::Extraneous | Decision::Unsure => {}
+        }
+
+        // for i in 1..10 {
+        //     let chk_graph = self.check_graph(i);
+        //     if chk_graph == Decision::Forever {
+        //         return format!("{} INFINITE (Graph Search {i})", self.to_string());
+        //     }
+        // }
+
+        let chk_linvar = self.check_strong_lin_comb();
+        if chk_linvar == Decision::Forever {
+            return format!("{} INFINITE (Linear Combinations)", self.to_string());
+        }
+
+        return format!("{} HOLDOUT", self.to_string());
     }
 }
 

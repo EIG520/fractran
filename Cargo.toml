@@ -11,7 +11,12 @@ path = "src/sim.rs"
 name = "enum"
 path = "src/enum.rs"
 
+[[bin]]
+name = "decide"
+path = "src/decide.rs"
+
 [dependencies]
+clap = { version = "4.5.53", features = ["derive"] }
 number-theory = "0.0.25"
 z3 = "0.19.6"
 

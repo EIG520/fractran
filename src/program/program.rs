@@ -83,6 +83,15 @@ impl FractranProgram {
         }
     }
 
+    pub fn cnt_step(&mut self) -> Option<usize> {
+        let rulew = self.find_rule()?;
+        let rule = self.rules.get_row(rulew);
+        for (i, v) in self.state.clone().iter().enumerate() {
+            self.state[i] = v.wrapping_add_signed(rule[i] as i64);
+        }
+        return Some(rulew);
+    }
+
     pub fn sim(&mut self, max: u64) -> Option<u64> {
         let mut steps = 0;
         while self.step() {
@@ -94,6 +103,22 @@ impl FractranProgram {
         }
 
         Some(steps)
+    }
+
+    pub fn cnt_sim(&mut self, max: u64) -> Vec<u64> {
+        let mut state_cnts = vec![0; self.rules.height];
+        let mut steps = 0;
+
+        while let Some(st) = self.cnt_step() {
+            state_cnts[st] += 1;
+            steps += 1;
+
+            if steps >= max {
+                return state_cnts;
+            }
+        }
+
+        state_cnts
     }
 
     pub fn new(state: Vec<u64>, rules: SVec2d) -> FractranProgram {
@@ -109,36 +134,35 @@ impl From<String> for FractranProgram {
     fn from(value: String) -> Self {
         let fracs = value[1..value.len()-1].split(", ");
 
-        let mut rules: Vec<i8> = vec![];
+        let mut rules = SVec2d::default();
 
-        for frac in fracs {
+        for (idy, frac) in fracs.enumerate() {
+            if idy > rules.height - 1 { rules.new_row(); }
+
             let mut items = frac.split("/");
 
             let mut num = items.next().expect("invalid program").parse::<i32>().expect("invalid program");
             let mut den = items.next().expect("invalid program").parse::<i32>().expect("invalid program");
 
-            let mut rule = vec![0;20];
-
             for (idx,prime) in PRIMES.iter().enumerate() {
                 while num % prime == 0 {
+                    if idx > rules.width - 1 { rules.incwidth(); }
+
                     num /= prime;
-                    rule[idx] += 1;
+                    rules.set(*rules.get(idx, idy) + 1, idx, idy);
                 }
                 while den % prime == 0 {
+                    if idx > rules.width - 1 { rules.incwidth(); }
+
                     den /= prime;
-                    rule[idx] -= 1;
+                    rules.set(*rules.get(idx, idy) - 1, idx, idy);
                 }
             }
-
-            println!("{:?}", rule);
-
-
-            rules.extend(rule);
         }
 
         let mut svec = vec![1];
-        svec.extend(vec![0;19]);
-        return FractranProgram::new(svec, SVec2d::new(rules,20))
+        svec.extend(vec![0;rules.width - 1]);
+        return FractranProgram::new(svec, rules)
     }
 }
 

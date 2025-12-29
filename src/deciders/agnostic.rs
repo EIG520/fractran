@@ -216,6 +216,56 @@ impl FractranProgram {
 }
 
 impl FractranProgram {
+    pub fn check_strong_lin_comb(&self) -> Decision {
+        // Simulate to find the min for each col
+        let mins = self.clone().cnt_sim(1000);
+        
+        // Create consts for each col, asserting mins
+        let solver = Solver::new();
+        let mut n = vec![];
+        for y in 0..self.rules.height {
+            n.push(Int::fresh_const(&format!("n{y}")));
+            solver.assert(n[y].ge(mins[y]));
+        }
+
+        // Find prime exps given application counts for each rule
+        let mut rs = vec![];
+        for x in 0..self.rules.width {
+            let mut rw = z3::ast::Int::from_i64( if x == 0 {1} else {0} );
+
+            for y in 0..self.rules.height {
+                let v = *self.rules.get(x,y);
+                rw += v * n[y].clone()
+            }
+            solver.assert(rw.ge(0));
+            rs.push(rw);
+        }
+
+        // assert the existence of a halting configuration
+        for y in 0..self.rules.height {
+            let mut asr = vec![];
+
+            for x in 0..self.rules.width {
+                let v = *self.rules.get(x,y);
+                if v < 0 {
+                    asr.push(rs[x].lt(-v));
+                }
+            }
+            solver.assert(z3::ast::Bool::or(&asr));
+        }
+
+        // return decision
+        if solver.check() == SatResult::Unsat {
+            return Decision::Forever;
+        } else {
+            println!("{:?}", solver.get_assertions());
+            println!("{:?}", solver.get_model());
+        }
+        return Decision::Unsure;
+    }
+}
+
+impl FractranProgram {
     pub fn check_graph(&mut self, exp_lim: u64) -> Decision {
         let mut queue = Vec2d::new(vec![1], self.rules.width);
         let mut seen = HashSet::new();
